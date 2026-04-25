@@ -8,7 +8,7 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user
       const path = nextUrl.pathname
       const isApiRoute = path.startsWith("/api/")
-      const PUBLIC_PATHS = ["/login", "/api/auth"]
+      const PUBLIC_PATHS = ["/login", "/api/auth", "/api/debug-db"]
       const isPublic = PUBLIC_PATHS.some(p => path.startsWith(p))
 
       if (isPublic) return true
