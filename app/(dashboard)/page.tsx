@@ -112,18 +112,20 @@ async function getStatsForRole(role: Role, companyId: string, employeeId: string
       }
     )
   } else {
-    const annualBalance = await prisma.leaveBalance.findFirst({
-      where: { employeeId, type: "ANNUAL", companyId },
-    })
-    const pendingLeave = await prisma.leaveRequest.count({
-      where: { employeeId, status: "PENDING" },
-    })
-    const approvedLeave = await prisma.leaveRequest.count({
-      where: { employeeId, status: "APPROVED" },
-    })
-    const myTickets = await prisma.ticket.count({
-      where: { employeeId, resolved: false },
-    })
+    const [annualBalance, pendingLeave, approvedLeave, myTickets] = await Promise.all([
+      prisma.leaveBalance.findFirst({
+        where: { employeeId, type: "ANNUAL", companyId },
+      }),
+      prisma.leaveRequest.count({
+        where: { employeeId, status: "PENDING" },
+      }),
+      prisma.leaveRequest.count({
+        where: { employeeId, status: "APPROVED" },
+      }),
+      prisma.ticket.count({
+        where: { employeeId, resolved: false },
+      }),
+    ])
 
     const remaining = annualBalance
       ? annualBalance.total - annualBalance.used

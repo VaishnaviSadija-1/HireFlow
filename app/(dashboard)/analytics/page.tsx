@@ -161,7 +161,7 @@ export default async function AnalyticsPage() {
     )
   }
 
-  const [employees, jobs, candidates, leaveBalances, inactiveEmployees] =
+  const [employees, jobs, candidates, leaveBalances, inactiveEmployees, allEmployeeCount] =
     await Promise.all([
       prisma.employee.findMany({
         where: { companyId, status: "ACTIVE" },
@@ -187,10 +187,10 @@ export default async function AnalyticsPage() {
         where: { companyId, status: "INACTIVE" },
         select: { managerId: true },
       }),
+      prisma.employee.count({ where: { companyId } }),
     ])
 
   // KPIs
-  const allEmployeeCount = await prisma.employee.count({ where: { companyId } })
   const openJobs = jobs.filter((j) => j.status === "OPEN").length
   const tenures = employees.map((e) => monthsDiff(e.hireDate, now))
   const avgTenureMonths =

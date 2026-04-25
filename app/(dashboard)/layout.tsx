@@ -19,9 +19,6 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen" style={{ background: "#0a0a0f", fontFamily: "'DM Sans', sans-serif" }}>
-      {/* Google Fonts */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');`}</style>
-
       <Sidebar
         role={role as Role}
         name={name}

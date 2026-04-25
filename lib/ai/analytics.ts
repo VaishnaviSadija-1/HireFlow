@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache"
 import { anthropic } from "./client"
 import { observedAiCall } from "@/lib/agentops/observe"
 
@@ -17,7 +18,7 @@ export interface FlightRiskEmployee {
   reasons: string[]
 }
 
-export async function generateRiskNarrative(
+async function _generateRiskNarrative(
   highRiskEmployees: FlightRiskEmployee[]
 ): Promise<string> {
   if (highRiskEmployees.length === 0) {
@@ -57,3 +58,9 @@ export async function generateRiskNarrative(
     ? textBlock.text
     : "Unable to generate risk narrative at this time."
 }
+
+export const generateRiskNarrative = unstable_cache(
+  _generateRiskNarrative,
+  ["risk-narrative"],
+  { revalidate: 3600 }
+)
