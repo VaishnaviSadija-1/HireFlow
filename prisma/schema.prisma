@@ -1,0 +1,225 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id         String   @id @default(cuid())
+  name       String
+  domain     String   @unique
+  createdAt  DateTime @default(now())
+  users      User[]
+  employees  Employee[]
+  departments Department[]
+  jobs       Job[]
+  policyDocs PolicyDocument[]
+  tickets    Ticket[]
+  leaveReqs  LeaveRequest[]
+  auditLogs     AuditLog[]
+  aiCallLogs    AiCallLog[]
+  pulseSurveys  PulseSurvey[]
+  reviewCycles  ReviewCycle[]
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  role       String   // SUPER_ADMIN | HR_ADMIN | MANAGER | EMPLOYEE
+  companyId  String?
+  employeeId String?
+  createdAt  DateTime @default(now())
+  company    Company? @relation(fields: [companyId], references: [id])
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  auditLogs  AuditLog[]
+}
+
+model Employee {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  title        String
+  departmentId String?
+  managerId    String?
+  companyId    String
+  location     String
+  skills       String   // JSON array as string
+  hireDate     DateTime
+  status       String   @default("ACTIVE") // ACTIVE | INACTIVE
+  gender       String?
+  createdAt    DateTime @default(now())
+  company      Company  @relation(fields: [companyId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+  manager      Employee?   @relation("EmployeeManager", fields: [managerId], references: [id])
+  reports      Employee[]  @relation("EmployeeManager")
+  users        User[]
+  leaveReqs    LeaveRequest[]
+  tickets      Ticket[]
+  leaveBalance LeaveBalance[]
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String
+  companyId String
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id])
+  employees Employee[]
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  companyId String
+  diff      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id])
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  requirements String   // JSON array as string
+  companyId    String
+  status       String   @default("OPEN") // OPEN | CLOSED | DRAFT
+  createdAt    DateTime @default(now())
+  company      Company  @relation(fields: [companyId], references: [id])
+  candidates   Candidate[]
+}
+
+model Candidate {
+  id            String   @id @default(cuid())
+  jobId         String
+  name          String
+  email         String
+  resumeText    String
+  aiScore       Float?
+  aiExplanation String?
+  stage         String   @default("APPLIED") // APPLIED | SCREENED | INTERVIEW | OFFER | HIRED | REJECTED
+  companyId     String
+  createdAt     DateTime @default(now())
+  job           Job      @relation(fields: [jobId], references: [id])
+}
+
+model PolicyDocument {
+  id          String   @id @default(cuid())
+  filename    String
+  content     String
+  companyId   String
+  uploadedAt  DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+model Ticket {
+  id         String   @id @default(cuid())
+  employeeId String
+  question   String
+  aiAnswer   String?
+  escalated  Boolean  @default(false)
+  resolved   Boolean  @default(false)
+  companyId  String
+  createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  company    Company  @relation(fields: [companyId], references: [id])
+}
+
+model LeaveRequest {
+  id         String   @id @default(cuid())
+  employeeId String
+  type       String   // SICK | CASUAL | ANNUAL
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  status     String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  managerId  String?
+  companyId  String
+  createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  company    Company  @relation(fields: [companyId], references: [id])
+}
+
+model LeaveBalance {
+  id         String   @id @default(cuid())
+  employeeId String
+  type       String
+  total      Int
+  used       Int      @default(0)
+  companyId  String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+model AiCallLog {
+  id         String   @id @default(cuid())
+  agentName  String
+  prompt     String
+  response   String
+  inputTokens  Int    @default(0)
+  outputTokens Int    @default(0)
+  latencyMs  Int      @default(0)
+  costUsd    Float    @default(0)
+  companyId  String?
+  createdAt  DateTime @default(now())
+  company    Company? @relation(fields: [companyId], references: [id])
+}
+
+model PulseSurvey {
+  id         String   @id @default(cuid())
+  title      String
+  questions  String   // JSON: [{text, type: "rating"|"text"}]
+  cadence    String   // ONE_TIME | WEEKLY | BIWEEKLY | MONTHLY
+  targetType String   // ALL | DEPARTMENT
+  targetId   String?  // departmentId if DEPARTMENT
+  companyId  String
+  active     Boolean  @default(true)
+  endsAt     DateTime?
+  createdAt  DateTime @default(now())
+  company    Company  @relation(fields: [companyId], references: [id])
+  responses  PulseSurveyResponse[]
+}
+
+model PulseSurveyResponse {
+  id        String   @id @default(cuid())
+  surveyId  String
+  deptId    String?  // anonymous — no employeeId
+  companyId String
+  answers   String   // JSON: [{questionIndex, rating?, comment?}]
+  weekOf    DateTime // Monday of the week
+  createdAt DateTime @default(now())
+  survey    PulseSurvey @relation(fields: [surveyId], references: [id])
+}
+
+model ReviewCycle {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // SELF_ONLY | MANAGER_ONLY | THREE_SIXTY
+  companyId String
+  startDate DateTime
+  deadline  DateTime
+  status    String   @default("OPEN") // OPEN | CLOSED | RESULTS_SHARED
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id])
+  reviews   PerformanceReview[]
+}
+
+model PerformanceReview {
+  id            String   @id @default(cuid())
+  cycleId       String
+  revieweeId    String   // Employee being reviewed
+  reviewerId    String   // Employee doing the reviewing
+  reviewerRole  String   // SELF | PEER | MANAGER
+  answers       String   // JSON structured answers
+  overallRating Float?
+  aiSummary     String?  // Claude synthesis (only on reviewee record, set after synthesize)
+  companyId     String
+  submittedAt   DateTime?
+  createdAt     DateTime @default(now())
+  cycle         ReviewCycle @relation(fields: [cycleId], references: [id])
+}
