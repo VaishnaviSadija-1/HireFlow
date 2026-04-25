@@ -70,7 +70,11 @@ export default function LoginPage() {
         redirect: false,
       })
       if (result?.error) {
-        setError("No account found with that email address.")
+        setError(
+          result.error === "DB_ERROR"
+            ? "Unable to reach the database. Please try again."
+            : "No account found with that email address."
+        )
         setActiveEmail(null)
       } else {
         window.location.href = "/"
@@ -313,7 +317,11 @@ export default function LoginPage() {
                         redirect: false,
                       })
                       if (result?.error) {
-                        setError("No account found with that email address.")
+                        setError(
+                          result.error === "DB_ERROR"
+                            ? "Unable to reach the database. Please try again."
+                            : "No account found with that email address."
+                        )
                         setActiveEmail(null)
                       } else {
                         window.location.href = "/"
